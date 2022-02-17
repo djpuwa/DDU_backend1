@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+graphene-django = "*"
+django-graphql-jwt = "*"
+django-graphql-auth = "*"
+pyjwt = "==1.7.0"
+django-phonenumber-field = {extras = ["phonenumbers"], version = "*"}
+pillow = "*"
+graphene-file-upload = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
