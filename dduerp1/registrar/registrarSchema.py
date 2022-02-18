@@ -247,6 +247,7 @@ class DeleteProgram(graphene.Mutation):
         else:
             return cls(success=False,error="No Data Found")
 
+#ExamScemeHead
 class CreateExamScheme(graphene.Mutation):
     class Arguments:
         input=ExamSchemeInput()
