@@ -47,7 +47,18 @@ class ProgramType(DjangoObjectType):
             'maxSessions',
         )
 
-
+class ExamScemeType(DjangoObjectType):
+    class Meta:
+        model=ExamSchemeHead
+        fields=(
+            'id',
+            'external',
+            'sessional',
+            'practical',
+            'theory',
+            'maxMarks',
+            'minMarks',
+        )
 
 class FacultyInput(graphene.InputObjectType):
     id=graphene.Int()
@@ -72,6 +83,15 @@ class ProgramInput(graphene.InputObjectType):
     duration=graphene.Float()
     sessionalType=graphene.String()
     maxSssions=graphene.Int()
+
+class ExamSchemeInput(graphene.InputObjectType):
+    id=graphene.Int()
+    external=graphene.Int()
+    sessional=graphene.Int()
+    practical=graphene.Int()
+    theory=graphene.Int()
+    maxMarks=graphene.Int()
+    minMarks=graphene.Int()
 
 #Faculty Query
 class CreateFaculty(graphene.Mutation):
@@ -227,12 +247,57 @@ class DeleteProgram(graphene.Mutation):
         else:
             return cls(success=False,error="No Data Found")
 
+class CreateExamScheme(graphene.Mutation):
+    class Arguments:
+        input=ExamSchemeInput()
+    
+    exam=graphene.Field(ExamScemeType)
+    @classmethod
+    def mutate(cls,root, info,input):
+        exam=ExamSchemeHead()
+        exam.external=input.external
+        exam.sessional=input.sessional
+        exam.practical=input.practical
+        exam.theory=input.theory
+        exam.maxMarks=input.maxMarks
+        exam.minMarks=input.minMarks
+        exam.save()
+        return CreateExamScheme(exam=exam)
+
+class UpdateExamScheme(graphene.Mutation):
+    class Arguments:
+        input=ExamSchemeInput()
+    
+    exam=graphene.Field(ExamScemeType)
+    @classmethod
+    def mutate(cls,root, info,input):
+        exam=ExamSchemeHead.objects.get(id=input.id)
+        exam.external=input.external
+        exam.sessional=input.sessional
+        exam.practical=input.practical
+        exam.theory=input.theory
+        exam.maxMarks=input.maxMarks
+        exam.minMarks=input.minMarks
+        exam.save()
+        return UpdateExamScheme(exam=exam)
+
+class DeleteExamScheme(graphene.Mutation):
+    class Arguments:
+        id=graphene.Int()
+    
+    success=graphene.Boolean()
+    @classmethod
+    def mutate(cls,root, info,input):
+        exam=ExamSchemeHead.objects.get(id=id)
+        exam.delete()
+        return cls(success=True)
 
 
 class Query(UserQuery, MeQuery, graphene.ObjectType):
     faculty=graphene.List(FacultyType)
     department=graphene.List(DepartmentType)
     program=graphene.List(ProgramType)
+    exam_scheme_head=graphene.List(ExamScemeType)
 
     def resolve_faculty(root,info,**kwargs):
         return Faculty.objects.all()
@@ -240,6 +305,8 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
         return Department.objects.all()
     def resolve_program(root,info,**kwargs):
         return Program.objects.all()
+    def resolve_exam_scheme_head(root,info,**kwargs):
+        return ExamSchemeHead.objects.all()
 
 
 class Mutation( graphene.ObjectType):
@@ -252,5 +319,8 @@ class Mutation( graphene.ObjectType):
     create_program=CreateProgram.Field()
     update_program=UpdateProgram.Field()
     delete_program=DeleteProgram.Field()
+    create_exam_scheme_head=CreateExamScheme.Field()
+    update_exam_scheme_head=UpdateExamScheme.Field()
+    delete_exam_scheme_head=DeleteExamScheme.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
