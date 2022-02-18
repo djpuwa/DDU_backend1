@@ -238,13 +238,13 @@ class UpdateUserRole(graphene.Mutation):
 
 class DeleteUserRole(graphene.Mutation):
    class Arguments:
-      input=RoleInput(required=True)
+      id=graphene.Int()
    
    success=graphene.Boolean()
 
    @classmethod
-   def mutate(cls,root,info,input):
-      role=UserRole.objects.get(id=input.id)
+   def mutate(cls,root,info,id):
+      role=UserRole.objects.get(id=id)
       role.delete()
       return cls(success=True)
 

@@ -43,9 +43,18 @@ class ExamSchemeHead(models.Model):
     external=models.IntegerField()
     sessional=models.IntegerField()
     practical=models.IntegerField()
-    theory=models.IntegerField()
+    teamwork=models.IntegerField()
     maxMarks=models.IntegerField()
     minMarks=models.IntegerField()
 
     def __self__(self):
         return self.id    
+
+class TeachingSchemeHead(models.Model):
+    id=models.AutoField(primary_key=True)
+    lectures=models.ImageField()
+    tutorials=models.IntegerField()
+    labs=models.IntegerField()
+
+    def __self__(self):
+        return self.id

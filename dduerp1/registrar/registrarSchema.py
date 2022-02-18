@@ -4,7 +4,7 @@ import graphene
 from graphene_django import DjangoObjectType
 from graphql_auth import mutations
 from graphql_auth.schema import UserQuery, MeQuery
-from .models import Faculty, Department, Program, ExamSchemeHead
+from .models import Faculty, Department, Program, ExamSchemeHead, TeachingSchemeHead
 from accounts.models import ExtendUser
 from graphene_file_upload.scalars import Upload
 
@@ -55,9 +55,19 @@ class ExamScemeType(DjangoObjectType):
             'external',
             'sessional',
             'practical',
-            'theory',
+            'teamwork',
             'maxMarks',
             'minMarks',
+        )
+
+class TeachingSchemeType(DjangoObjectType):
+    class Meta:
+        model=TeachingSchemeHead
+        fields=(
+            'id',
+            'lectures',
+            'tutorials',
+            'labs',
         )
 
 class FacultyInput(graphene.InputObjectType):
@@ -89,9 +99,16 @@ class ExamSchemeInput(graphene.InputObjectType):
     external=graphene.Int()
     sessional=graphene.Int()
     practical=graphene.Int()
-    theory=graphene.Int()
+    teamwork=graphene.Int()
     maxMarks=graphene.Int()
     minMarks=graphene.Int()
+
+class TeachingSchemeInput(graphene.InputObjectType):
+    id=graphene.Int()
+    lectures=graphene.Int()
+    tutorials=graphene.Int()
+    labs=graphene.Int()
+
 
 #Faculty Query
 class CreateFaculty(graphene.Mutation):
@@ -127,14 +144,14 @@ class UpdateFaculty(graphene.Mutation):
 
 class DeleteFaculty(graphene.Mutation):
     class Arguments:
-        input=graphene.Int()
+        id=graphene.Int()
     
     success=graphene.Boolean()
     error=graphene.String()
     @classmethod
-    def mutate(cls, root, info, input):
-        if Faculty.objects.get(id=input):
-            faculty=Faculty.objects.get(id=input)
+    def mutate(cls, root, info, id):
+        if Faculty.objects.get(id=id):
+            faculty=Faculty.objects.get(id=id)
             faculty.delete()
             return cls(success=True)
         else:
@@ -180,14 +197,14 @@ class UpdateDepartment(graphene.Mutation):
 
 class DeleteDepartment(graphene.Mutation):
     class Arguments:
-        input=graphene.Int()
+        id=graphene.Int()
     
     success=graphene.Boolean()
     error=graphene.String()
     @classmethod
-    def mutate(cls, root, info, input):
-        if Department.objects.get(id=input):
-            dept=Department.objects.get(id=input)
+    def mutate(cls, root, info, id):
+        if Department.objects.get(id=id):
+            dept=Department.objects.get(id=id)
             dept.delete()
             return cls(success=True)
         else:
@@ -234,14 +251,14 @@ class UpdateProgram(graphene.Mutation):
 
 class DeleteProgram(graphene.Mutation):
     class Arguments:
-        input=graphene.Int()
+        id=graphene.Int()
     
     success=graphene.Boolean()
     error=graphene.String()
     @classmethod
-    def mutate(cls, root, info, input):
-        if Program.objects.get(id=input):
-            dept=Program.objects.get(id=input)
+    def mutate(cls, root, info, d):
+        if Program.objects.get(id=id):
+            dept=Program.objects.get(id=id)
             dept.delete()
             return cls(success=True)
         else:
@@ -259,7 +276,7 @@ class CreateExamScheme(graphene.Mutation):
         exam.external=input.external
         exam.sessional=input.sessional
         exam.practical=input.practical
-        exam.theory=input.theory
+        exam.teamwork=input.teamwork
         exam.maxMarks=input.maxMarks
         exam.minMarks=input.minMarks
         exam.save()
@@ -276,7 +293,7 @@ class UpdateExamScheme(graphene.Mutation):
         exam.external=input.external
         exam.sessional=input.sessional
         exam.practical=input.practical
-        exam.theory=input.theory
+        exam.teamwork=input.teamwork
         exam.maxMarks=input.maxMarks
         exam.minMarks=input.minMarks
         exam.save()
@@ -293,12 +310,54 @@ class DeleteExamScheme(graphene.Mutation):
         exam.delete()
         return cls(success=True)
 
+#Teaching Scheme
+class CreateTeachingScheme(graphene.Mutation):
+    class Arguments:
+        input=TeachingSchemeInput()
+    
+    teachingScheme=graphene.Field(TeachingSchemeType)
+    @classmethod
+    def mutate(cls,root,info, input):
+        teachingScheme=TeachingSchemeHead()
+        teachingScheme.lectures=input.lectures
+        teachingScheme.tutorials=input.tutorials
+        teachingScheme.labs=input.labs
+        teachingScheme.save()
+        return CreateTeachingScheme(teachingScheme=teachingScheme)
+
+class UpdateTeachingScheme(graphene.Mutation):
+    class Arguments:
+        input=TeachingSchemeInput()
+    
+    teachingScheme=graphene.Field(TeachingSchemeType)
+    @classmethod
+    def mutate(cls,root,info, input):
+        teachingScheme=TeachingSchemeHead.objects.get(id=input.id)
+        teachingScheme.lectures=input.lectures
+        teachingScheme.tutorials=input.tutorials
+        teachingScheme.labs=input.labs
+        teachingScheme.save()
+        return UpdateTeachingScheme(teachingScheme=teachingScheme)
+
+class DeleteTeachingScheme(graphene.Mutation):
+    class Arguments:
+        id=graphene.Int()
+    
+    success=graphene.Boolean()
+    @classmethod
+    def mutate(cls,root,info, id):
+        teachingScheme=TeachingSchemeHead.objects.get(id=id)
+        teachingScheme.delete()
+        return cls(success=True)
+
+
 
 class Query(UserQuery, MeQuery, graphene.ObjectType):
     faculty=graphene.List(FacultyType)
     department=graphene.List(DepartmentType)
     program=graphene.List(ProgramType)
     exam_scheme_head=graphene.List(ExamScemeType)
+    teaching_scheme_head=graphene.List(TeachingSchemeType)
 
     def resolve_faculty(root,info,**kwargs):
         return Faculty.objects.all()
@@ -308,6 +367,8 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
         return Program.objects.all()
     def resolve_exam_scheme_head(root,info,**kwargs):
         return ExamSchemeHead.objects.all()
+    def resolve_teaching_scheme_head(root,info,**kwargs):
+        return TeachingSchemeHead.objects.all()
 
 
 class Mutation( graphene.ObjectType):
@@ -323,5 +384,8 @@ class Mutation( graphene.ObjectType):
     create_exam_scheme_head=CreateExamScheme.Field()
     update_exam_scheme_head=UpdateExamScheme.Field()
     delete_exam_scheme_head=DeleteExamScheme.Field()
+    create_teaching_scheme_head=CreateTeachingScheme.Field()
+    update_teaching_scheme_head=UpdateTeachingScheme.Field()
+    delete_teaching_scheme_head=DeleteTeachingScheme.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

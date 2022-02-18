@@ -81,13 +81,13 @@ class UpdateFeeStructure(graphene.Mutation):
 
 class DeleteFeeStructure(graphene.Mutation):
    class Arguments:
-      input = FeeHeadInput()
+      id = graphene.Int()
    
    success = graphene.Boolean()
 
    @classmethod
-   def mutate(cls, root, info,input):
-      feeStruct=FeeStructureHead.objects.get(id=input.id)
+   def mutate(cls, root, info,id):
+      feeStruct=FeeStructureHead.objects.get(id=id)
       feeStruct.delete()
       return cls(success=True)
 
@@ -125,13 +125,13 @@ class UpdateFeeCategory(graphene.Mutation):
 
 class DeleteFeeCategory(graphene.Mutation):
    class Arguments:
-      input = FeeCategoryInput()
+      id = graphene.Int()
    
    success = graphene.Boolean()
 
    @classmethod
-   def mutate(cls, root, info,input):
-      feeStruct=FeeStructureCategory.objects.get(id=input.id)
+   def mutate(cls, root, info,id):
+      feeStruct=FeeStructureCategory.objects.get(id=id)
       feeStruct.delete()
       return cls(success=True)
 
