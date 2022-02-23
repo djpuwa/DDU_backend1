@@ -1,10 +1,12 @@
 
+from asyncio.windows_events import NULL
 import email
+from re import sub
 import graphene
 from graphene_django import DjangoObjectType
 from graphql_auth import mutations
 from graphql_auth.schema import UserQuery, MeQuery
-from .models import Faculty, Department, Program, ExamSchemeHead, TeachingSchemeHead
+from .models import Faculty, Department, Program, ExamSchemeHead, TeachingSchemeHead, Subject
 from accounts.models import ExtendUser
 from graphene_file_upload.scalars import Upload
 
@@ -70,6 +72,18 @@ class TeachingSchemeType(DjangoObjectType):
             'labs',
         )
 
+class SubjectType(DjangoObjectType):
+    class Meta:
+        model=Subject
+        fields=(
+            'code',
+            'name',
+            'shortName',
+            'teachingScheme',
+            'examScheme',
+        )
+
+
 class FacultyInput(graphene.InputObjectType):
     id=graphene.Int()
     name=graphene.String()
@@ -108,6 +122,13 @@ class TeachingSchemeInput(graphene.InputObjectType):
     lectures=graphene.Int()
     tutorials=graphene.Int()
     labs=graphene.Int()
+
+class SubjectInput(graphene.InputObjectType):
+    code=graphene.String()
+    name=graphene.String()
+    shortName=graphene.String()
+    teachingScheme=graphene.Int()
+    examScheme=graphene.Int()
 
 
 #Faculty Query
@@ -350,6 +371,52 @@ class DeleteTeachingScheme(graphene.Mutation):
         teachingScheme.delete()
         return cls(success=True)
 
+#Subject
+class CreateSubject(graphene.Mutation):
+    class Arguments:
+        input=SubjectInput()
+    
+    subject=graphene.Field(SubjectType)
+    @classmethod
+    def mutate(cls, root, info,input):
+        subject=Subject()
+        subject.code=input.code
+        subject.name=input.name
+        subject.shortName=input.shortName
+        if input.teachingScheme :
+            subject.teachingScheme=TeachingSchemeHead.objects.get(id=input.teachingScheme)
+        if input.examScheme :
+            subject.examScheme=ExamSchemeHead.objects.get(id=input.examScheme)
+        subject.save()
+        return CreateSubject(subject=subject)
+
+class UpdateSubject(graphene.Mutation):
+    class Arguments:
+        input=SubjectInput()
+    
+    subject=graphene.Field(SubjectType)
+    @classmethod
+    def mutate(cls, root, info,input):
+        subject=Subject.objects.get(code=input.code)
+        subject.name=input.name
+        subject.shortName=input.shortName
+        subject.teachingScheme=TeachingSchemeHead.objects.get(id=input.teachingScheme)
+        subject.examScheme=ExamSchemeHead.objects.get(id=input.examScheme)
+        subject.save()
+        return CreateSubject(subject=subject)
+
+class DeleteSubject(graphene.Mutation):
+    class Arguments:
+        code=graphene.String()
+
+    success=graphene.Boolean()
+    @classmethod
+    def mutate(cls,root,info,code):
+        subject=Subject.objects.get(code=code)
+        subject.delete()
+        return cls(success=True)
+        
+
 
 
 class Query(UserQuery, MeQuery, graphene.ObjectType):
@@ -358,6 +425,7 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
     program=graphene.List(ProgramType)
     exam_scheme_head=graphene.List(ExamScemeType)
     teaching_scheme_head=graphene.List(TeachingSchemeType)
+    subject=graphene.List(SubjectType)
 
     def resolve_faculty(root,info,**kwargs):
         return Faculty.objects.all()
@@ -369,6 +437,8 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
         return ExamSchemeHead.objects.all()
     def resolve_teaching_scheme_head(root,info,**kwargs):
         return TeachingSchemeHead.objects.all()
+    def resolve_subject(root,info,**kwargs):
+        return Subject.objects.all()
 
 
 class Mutation( graphene.ObjectType):
@@ -387,5 +457,8 @@ class Mutation( graphene.ObjectType):
     create_teaching_scheme_head=CreateTeachingScheme.Field()
     update_teaching_scheme_head=UpdateTeachingScheme.Field()
     delete_teaching_scheme_head=DeleteTeachingScheme.Field()
+    create_subject=CreateSubject.Field()
+    update_subject=UpdateSubject.Field()
+    delete_subject=DeleteSubject.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

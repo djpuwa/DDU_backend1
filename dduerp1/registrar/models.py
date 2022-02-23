@@ -1,4 +1,5 @@
 from operator import mod
+from unicodedata import name
 from django.db import models
 from accounts.models import ExtendUser
 
@@ -52,9 +53,19 @@ class ExamSchemeHead(models.Model):
 
 class TeachingSchemeHead(models.Model):
     id=models.AutoField(primary_key=True)
-    lectures=models.ImageField()
+    lectures=models.IntegerField()
     tutorials=models.IntegerField()
     labs=models.IntegerField()
 
     def __self__(self):
         return self.id
+
+class Subject(models.Model):
+    code=models.CharField(max_length=15,primary_key=True)
+    name=models.CharField(max_length=30)
+    shortName=models.CharField(max_length=10)
+    teachingScheme=models.ForeignKey(TeachingSchemeHead,on_delete=models.SET_NULL,null=True)
+    examScheme=models.ForeignKey(ExamSchemeHead,on_delete=models.SET_NULL,null=True)
+
+    def __self__(self):
+        return self.name
