@@ -1,7 +1,5 @@
 
-from asyncio.windows_events import NULL
-import email
-from re import sub
+from accounts.models import UserRole
 import graphene
 from graphene_django import DjangoObjectType
 from graphql_auth import mutations
@@ -9,7 +7,7 @@ from graphql_auth.schema import UserQuery, MeQuery
 from .models import Faculty, Department, Program, ExamSchemeHead, TeachingSchemeHead, Subject
 from accounts.models import ExtendUser
 from graphene_file_upload.scalars import Upload
-
+from graphql_jwt.decorators import login_required, user_passes_test
 
 
 
@@ -54,12 +52,7 @@ class ExamScemeType(DjangoObjectType):
         model=ExamSchemeHead
         fields=(
             'id',
-            'external',
-            'sessional',
-            'practical',
-            'teamwork',
-            'maxMarks',
-            'minMarks',
+            'type',
         )
 
 class TeachingSchemeType(DjangoObjectType):
@@ -67,9 +60,7 @@ class TeachingSchemeType(DjangoObjectType):
         model=TeachingSchemeHead
         fields=(
             'id',
-            'lectures',
-            'tutorials',
-            'labs',
+            'type',
         )
 
 class SubjectType(DjangoObjectType):
@@ -110,18 +101,11 @@ class ProgramInput(graphene.InputObjectType):
 
 class ExamSchemeInput(graphene.InputObjectType):
     id=graphene.Int()
-    external=graphene.Int()
-    sessional=graphene.Int()
-    practical=graphene.Int()
-    teamwork=graphene.Int()
-    maxMarks=graphene.Int()
-    minMarks=graphene.Int()
+    type=graphene.String()
 
 class TeachingSchemeInput(graphene.InputObjectType):
     id=graphene.Int()
-    lectures=graphene.Int()
-    tutorials=graphene.Int()
-    labs=graphene.Int()
+    type=graphene.String()
 
 class SubjectInput(graphene.InputObjectType):
     code=graphene.String()
@@ -139,6 +123,8 @@ class CreateFaculty(graphene.Mutation):
     faculty=graphene.Field(FacultyType)
 
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, input):
         faculty=Faculty()
         faculty.name=input.name
@@ -154,6 +140,8 @@ class UpdateFaculty(graphene.Mutation):
     
     faculty=graphene.Field(FacultyType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, input):
         faculty=Faculty.objects.get(id=input.id)
         faculty.name=input.name
@@ -170,6 +158,8 @@ class DeleteFaculty(graphene.Mutation):
     success=graphene.Boolean()
     error=graphene.String()
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, id):
         if Faculty.objects.get(id=id):
             faculty=Faculty.objects.get(id=id)
@@ -187,6 +177,8 @@ class CreateDepartment(graphene.Mutation):
     dept=graphene.Field(DepartmentType)
 
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, input):
         dept=Department()
         dept.name=input.name
@@ -196,7 +188,7 @@ class CreateDepartment(graphene.Mutation):
         head=ExtendUser.objects.get(email=input.head)
         dept.head=head
         dept.save()
-        return CreateFaculty(faculty=faculty)
+        return CreateDepartment(dept=dept)
 
 class UpdateDepartment(graphene.Mutation):
     class Arguments:
@@ -205,6 +197,8 @@ class UpdateDepartment(graphene.Mutation):
     dept=graphene.Field(DepartmentType)
 
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, input):
         dept=Department.objects.get(id=input.id)
         dept.name=input.name
@@ -214,7 +208,7 @@ class UpdateDepartment(graphene.Mutation):
         head=ExtendUser.objects.get(email=input.head)
         dept.head=head
         dept.save()
-        return CreateFaculty(faculty=faculty)
+        return CreateFaculty(dept=dept)
 
 class DeleteDepartment(graphene.Mutation):
     class Arguments:
@@ -223,6 +217,8 @@ class DeleteDepartment(graphene.Mutation):
     success=graphene.Boolean()
     error=graphene.String()
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, id):
         if Department.objects.get(id=id):
             dept=Department.objects.get(id=id)
@@ -238,6 +234,8 @@ class CreateProgram(graphene.Mutation):
     
     program=graphene.Field(ProgramType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root,info,input):
         program=Program()
         program.name=input.name
@@ -257,6 +255,8 @@ class UpdateProgram(graphene.Mutation):
     
     program=graphene.Field(ProgramType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root,info,input):
         program=Program.objects.get(id=input.id)
         program.name=input.name
@@ -277,6 +277,8 @@ class DeleteProgram(graphene.Mutation):
     success=graphene.Boolean()
     error=graphene.String()
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info, d):
         if Program.objects.get(id=id):
             dept=Program.objects.get(id=id)
@@ -292,14 +294,11 @@ class CreateExamScheme(graphene.Mutation):
     
     exam=graphene.Field(ExamScemeType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root, info,input):
         exam=ExamSchemeHead()
-        exam.external=input.external
-        exam.sessional=input.sessional
-        exam.practical=input.practical
-        exam.teamwork=input.teamwork
-        exam.maxMarks=input.maxMarks
-        exam.minMarks=input.minMarks
+        exam.type=input.type
         exam.save()
         return CreateExamScheme(exam=exam)
 
@@ -309,14 +308,11 @@ class UpdateExamScheme(graphene.Mutation):
     
     exam=graphene.Field(ExamScemeType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root, info,input):
         exam=ExamSchemeHead.objects.get(id=input.id)
-        exam.external=input.external
-        exam.sessional=input.sessional
-        exam.practical=input.practical
-        exam.teamwork=input.teamwork
-        exam.maxMarks=input.maxMarks
-        exam.minMarks=input.minMarks
+        exam.type=input.type
         exam.save()
         return UpdateExamScheme(exam=exam)
 
@@ -326,6 +322,8 @@ class DeleteExamScheme(graphene.Mutation):
     
     success=graphene.Boolean()
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root, info,input):
         exam=ExamSchemeHead.objects.get(id=id)
         exam.delete()
@@ -338,11 +336,11 @@ class CreateTeachingScheme(graphene.Mutation):
     
     teachingScheme=graphene.Field(TeachingSchemeType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root,info, input):
         teachingScheme=TeachingSchemeHead()
-        teachingScheme.lectures=input.lectures
-        teachingScheme.tutorials=input.tutorials
-        teachingScheme.labs=input.labs
+        teachingScheme.type=input.type
         teachingScheme.save()
         return CreateTeachingScheme(teachingScheme=teachingScheme)
 
@@ -352,11 +350,11 @@ class UpdateTeachingScheme(graphene.Mutation):
     
     teachingScheme=graphene.Field(TeachingSchemeType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root,info, input):
         teachingScheme=TeachingSchemeHead.objects.get(id=input.id)
-        teachingScheme.lectures=input.lectures
-        teachingScheme.tutorials=input.tutorials
-        teachingScheme.labs=input.labs
+        teachingScheme.type=input.type
         teachingScheme.save()
         return UpdateTeachingScheme(teachingScheme=teachingScheme)
 
@@ -366,6 +364,8 @@ class DeleteTeachingScheme(graphene.Mutation):
     
     success=graphene.Boolean()
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root,info, id):
         teachingScheme=TeachingSchemeHead.objects.get(id=id)
         teachingScheme.delete()
@@ -378,6 +378,8 @@ class CreateSubject(graphene.Mutation):
     
     subject=graphene.Field(SubjectType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info,input):
         subject=Subject()
         subject.code=input.code
@@ -396,6 +398,8 @@ class UpdateSubject(graphene.Mutation):
     
     subject=graphene.Field(SubjectType)
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls, root, info,input):
         subject=Subject.objects.get(code=input.code)
         subject.name=input.name
@@ -411,6 +415,8 @@ class DeleteSubject(graphene.Mutation):
 
     success=graphene.Boolean()
     @classmethod
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def mutate(cls,root,info,code):
         subject=Subject.objects.get(code=code)
         subject.delete()
@@ -427,18 +433,32 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
     teaching_scheme_head=graphene.List(TeachingSchemeType)
     subject=graphene.List(SubjectType)
 
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def resolve_faculty(root,info,**kwargs):
+        # print(info.context.user.role.name)
         return Faculty.objects.all()
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def resolve_department(root,info,**kwargs):
         return Department.objects.all()
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def resolve_program(root,info,**kwargs):
         return Program.objects.all()
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def resolve_exam_scheme_head(root,info,**kwargs):
         return ExamSchemeHead.objects.all()
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def resolve_teaching_scheme_head(root,info,**kwargs):
         return TeachingSchemeHead.objects.all()
+    @login_required
+    @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
     def resolve_subject(root,info,**kwargs):
         return Subject.objects.all()
+
 
 
 class Mutation( graphene.ObjectType):

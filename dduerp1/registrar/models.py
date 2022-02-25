@@ -41,21 +41,14 @@ class Program(models.Model):
 
 class ExamSchemeHead(models.Model):
     id=models.AutoField(primary_key=True)
-    external=models.IntegerField()
-    sessional=models.IntegerField()
-    practical=models.IntegerField()
-    teamwork=models.IntegerField()
-    maxMarks=models.IntegerField()
-    minMarks=models.IntegerField()
+    type=models.CharField(max_length=20)
 
     def __self__(self):
         return self.id    
 
 class TeachingSchemeHead(models.Model):
     id=models.AutoField(primary_key=True)
-    lectures=models.IntegerField()
-    tutorials=models.IntegerField()
-    labs=models.IntegerField()
+    type=models.CharField(max_length=20)
 
     def __self__(self):
         return self.id

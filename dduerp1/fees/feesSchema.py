@@ -97,7 +97,7 @@ class CreateFeeCategoy(graphene.Mutation):
    class Arguments:
       input=FeeCategoryInput(required=True)
    
-   feeHead=graphene.Field(FeeStructureCategoryType)
+   feeCatagory=graphene.Field(FeeStructureCategoryType)
 
    @classmethod
    def mutate(cls, root, info, input):
@@ -106,13 +106,13 @@ class CreateFeeCategoy(graphene.Mutation):
       feeHead.description=input.description
       feeHead.time_stamp=input.time_stamp
       feeHead.save()
-      return CreateFeeCategoy(feeHead=feeHead)
+      return CreateFeeCategoy(feeCatagory=feeHead)
 
 class UpdateFeeCategory(graphene.Mutation):
    class Arguments:
       input = FeeCategoryInput()
    
-   feeStruct = graphene.Field(FeeStructureCategoryType)
+   feeCatagory = graphene.Field(FeeStructureCategoryType)
 
    @classmethod
    def mutate(cls, root, info, input):
@@ -121,7 +121,7 @@ class UpdateFeeCategory(graphene.Mutation):
       feeStruct.description=input.description
       feeStruct.time_stamp=input.time_stamp
       feeStruct.save()
-      return UpdateFeeCategory(feeStruct=feeStruct)
+      return UpdateFeeCategory(feeCatagory=feeStruct)
 
 class DeleteFeeCategory(graphene.Mutation):
    class Arguments:

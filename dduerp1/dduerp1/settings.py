@@ -160,7 +160,14 @@ GRAPHQL_JWT = {
     ],
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
+    # "JWT_EXPIRATION_DELTA": timedelta(minutes=5),
+    # "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
 }
 DEFAULT_AUTO_FIELD='django.db.models.AutoField' 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST='smtp.gmail.com'
+EMAIL_USE_TLS=True
+EMAIL_PORT=587
+EMAIL_HOST_USER='utsavdarji1012@gmail.com'
+EMAIL_HOST_PASSWORD='#UHD9099141'
 APPEND_SLASH=False

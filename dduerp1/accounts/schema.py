@@ -268,11 +268,15 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
    user_role=graphene.List(UserRoleType)
 
    def resolve_temp(root, info, **kwargs):
-       return Temp.objects.all()
+      return Temp.objects.all()
    def resolve_userProfile(root,info,**kwargs):
       return UserProfile.objects.all()
-   def resolve_user_role(root,info,**kwargs):
+   def resolve_user_role(root,info,id):
+      # id=kwargs.get("id")
+      # if id:
       return UserRole.objects.all()
+      # else:
+         # return UserRole.objects.all()
 
 class Mutation(AuthMutation, graphene.ObjectType):
    update_id = UpdateId.Field()
