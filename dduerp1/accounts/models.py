@@ -15,7 +15,7 @@ class UserRole(models.Model):
 class ExtendUser(AbstractUser):
     id=models.AutoField(primary_key=True)
     email = models.EmailField()
-    userid=models.CharField(default='' ,max_length=30)
+    
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL,null=True)
 
     USERNAME_FIELD = 'username'

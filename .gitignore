@@ -2,4 +2,4 @@
 *.pyc
 /migrations
 /images
-settings.py
+*/settings.py

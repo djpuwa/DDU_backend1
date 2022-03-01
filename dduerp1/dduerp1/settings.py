@@ -10,6 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+from datetime import timedelta
+import email
+import os
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,11 +63,11 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'dduerp1.urls'
-
+TEMPLATE_DIR = os.path.join(BASE_DIR ,'templates')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMPLATE_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -160,14 +164,21 @@ GRAPHQL_JWT = {
     ],
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
-    # "JWT_EXPIRATION_DELTA": timedelta(minutes=5),
-    # "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
+    "JWT_EXPIRATION_DELTA": timedelta(minutes=30),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
 }
 DEFAULT_AUTO_FIELD='django.db.models.AutoField' 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST='smtp.gmail.com'
 EMAIL_USE_TLS=True
 EMAIL_PORT=587
-EMAIL_HOST_USER='utsavdarji1012@gmail.com'
-EMAIL_HOST_PASSWORD='#UHD9099141'
+EMAIL_HOST_USER=''
+EMAIL_HOST_PASSWORD=''
 APPEND_SLASH=False
+
+
+GRAPHQL_AUTH = {
+    "EMAIL_TEMPLATE_ACTIVATION":"email/activation.html",
+    "EMAIL_TEMPLATE_PASSWORD_RESET":"email/reset.html",
+    
+}

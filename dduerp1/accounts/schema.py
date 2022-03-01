@@ -1,5 +1,6 @@
 
 
+from asyncio.windows_events import NULL
 import graphene
 from graphene_django import DjangoObjectType
 from graphql_auth import mutations
@@ -36,7 +37,6 @@ class ExtendUserTyoe(DjangoObjectType):
             'password',
             'first_name',
             'last_name',
-            'userid',
             'username',
             'role',
         )
@@ -271,8 +271,8 @@ class Query(UserQuery, MeQuery, graphene.ObjectType):
       return Temp.objects.all()
    def resolve_userProfile(root,info,**kwargs):
       return UserProfile.objects.all()
-   def resolve_user_role(root,info,id):
-      # id=kwargs.get("id")
+   def resolve_user_role(root,info,**kwargs):
+      # id=kwargs.get('id')
       # if id:
       return UserRole.objects.all()
       # else:
