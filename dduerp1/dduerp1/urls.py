@@ -22,11 +22,17 @@ from fees.feesSchema import schema as feeSchema
 from django.views.decorators.csrf import csrf_exempt
 from graphene_file_upload.django import FileUploadGraphQLView
 
+from django.views.static import serve
+from django.conf.urls import url
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("accounts/graphql/", csrf_exempt( GraphQLView.as_view(graphiql=True, schema=schema))),
     path('graphql1/', FileUploadGraphQLView.as_view(graphiql=True, schema=schema)),
     path("registrar/graphql/", csrf_exempt( GraphQLView.as_view(graphiql=True, schema=regSchema))),
     path("fees/graphql/", csrf_exempt( GraphQLView.as_view(graphiql=True, schema=feeSchema))),
+
+    url(r'^media/(?P<path>.*)$', serve,{'document_root':       settings.MEDIA_ROOT}), 
+    url(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}), 
 
 ]

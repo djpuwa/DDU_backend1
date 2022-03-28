@@ -6,6 +6,8 @@ from graphql_auth.schema import UserQuery, MeQuery
 from .models import  FeeStructureHead, FeeStructureCategory
 from graphene_file_upload.scalars import Upload
 
+from graphql_jwt.decorators import login_required, user_passes_test
+
 
 
 class FeeStructureHeadType(DjangoObjectType):
@@ -54,6 +56,8 @@ class CreateFeeStructureHead(graphene.Mutation):
    feeHead=graphene.Field(FeeStructureHeadType)
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls, root, info, input):
       feeHead = FeeStructureHead()
       feeHead.name =input.name
@@ -70,6 +74,8 @@ class UpdateFeeStructure(graphene.Mutation):
    feeStruct = graphene.Field(FeeStructureHeadType)
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls, root, info, input):
       feeStruct=FeeStructureHead.objects.get(id=input.id)
       feeStruct.name = input.name
@@ -86,6 +92,8 @@ class DeleteFeeStructure(graphene.Mutation):
    success = graphene.Boolean()
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls, root, info,id):
       feeStruct=FeeStructureHead.objects.get(id=id)
       feeStruct.delete()
@@ -100,6 +108,8 @@ class CreateFeeCategoy(graphene.Mutation):
    feeCatagory=graphene.Field(FeeStructureCategoryType)
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls, root, info, input):
       feeHead = FeeStructureCategory()
       feeHead.name =input.name
@@ -115,6 +125,8 @@ class UpdateFeeCategory(graphene.Mutation):
    feeCatagory = graphene.Field(FeeStructureCategoryType)
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls, root, info, input):
       feeStruct=FeeStructureCategory.objects.get(id=input.id)
       feeStruct.name = input.name
@@ -130,6 +142,8 @@ class DeleteFeeCategory(graphene.Mutation):
    success = graphene.Boolean()
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls, root, info,id):
       feeStruct=FeeStructureCategory.objects.get(id=id)
       feeStruct.delete()
@@ -137,13 +151,30 @@ class DeleteFeeCategory(graphene.Mutation):
 
 
 class Query(UserQuery, MeQuery, graphene.ObjectType):
-    fee_structure_head=graphene.List(FeeStructureHeadType)
-    fee_structure_category= graphene.List(FeeStructureCategoryType)
+   fee_structure_head=graphene.Field(FeeStructureHeadType,id=graphene.Int())
+   all_fee_structure_head=graphene.List(FeeStructureHeadType)
+   fee_structure_category= graphene.Field(FeeStructureCategoryType,id=graphene.Int())
+   all_fee_structure_category=graphene.List(FeeStructureCategoryType)
 
-    def resolve_fee_structure_head(root,info,**kwargs):
-        return FeeStructureHead.objects.all()
-    def resolve_fee_structure_category(root,info,**kwargs):
-        return FeeStructureCategory.objects.all()
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
+   def resolve_fee_structure_head(root,info,**kwargs):
+      return FeeStructureHead.objects.get(id=kwargs.get("id"))
+
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
+   def resolve_all_fee_structure_head(root,info,**kwargs):
+      return FeeStructureHead.objects.all()
+   
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
+   def resolve_fee_structure_category(root,info,**kwargs):
+      return FeeStructureCategory.objects.get(id=kwargs.get("id"))
+   
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
+   def resolve_all_fee_structure_category(root,info,**kwargs):
+      return FeeStructureCategory.objects.all()
 
 
 class Mutation( graphene.ObjectType):

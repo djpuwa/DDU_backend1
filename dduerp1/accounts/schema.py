@@ -1,18 +1,25 @@
 
 
 from asyncio.windows_events import NULL
+import datetime
+import email
+from sqlite3 import DataError
+from sre_constants import SUCCESS
+from xmlrpc.client import DateTime
 import graphene
 from graphene_django import DjangoObjectType
 from graphql_auth import mutations
 from graphql_auth.schema import UserQuery, MeQuery
 from .models import Temp, ExtendUser, UserProfile,  UserRole
 from graphene_file_upload.scalars import Upload
+from graphql_jwt.decorators import login_required, user_passes_test
 
 class AuthMutation(graphene.ObjectType):
    register = mutations.Register.Field()
    verify_account = mutations.VerifyAccount.Field()
-   token_auth = mutations.ObtainJSONWebToken.Field()
+   token_auth = mutations.ObtainJSONWebToken.Field() 
    update_account = mutations.UpdateAccount.Field()
+   delete_account = mutations.DeleteAccount.Field()
 #    resend_activation_email = mutations.ResendActivationEmail.Field()
    send_password_reset_email = mutations.SendPasswordResetEmail.Field()
    password_reset = mutations.PasswordReset.Field()
@@ -159,20 +166,20 @@ class UpdateUserProfile(graphene.Mutation):
       return CreateUserProfile(userProfile=userProfile)
 
 
-class DeleteUser(graphene.Mutation):
-   success = graphene.Boolean()
+# class DeleteUser(graphene.Mutation):
+#    success = graphene.Boolean()
 
-   class Arguments:
-      email = graphene.String(required=True)
+#    class Arguments:
+#       email = graphene.String(required=True)
 
-   @classmethod
-   def mutate(cls, root, info, **kwargs):
-      obj = ExtendUser.objects.get(email=kwargs["email"])
-      if obj is not None:
-         obj.delete()
-         return cls(success=True)
-      else:
-         return cls(success=False)
+#    @classmethod
+#    def mutate(cls, root, info, **kwargs):
+#       obj = ExtendUser.objects.get(email=kwargs["email"])
+#       if obj is not None:
+#          obj.delete()
+#          return cls(success=True)
+#       else:
+#          return cls(success=False)
 
 class DeleteUserProfile(graphene.Mutation):
    success = graphene.Boolean()
@@ -215,6 +222,8 @@ class CreateUserRole(graphene.Mutation):
    role=graphene.Field(UserRoleType)
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls,root,info,input):
       role=UserRole()
       role.name=input.name
@@ -229,6 +238,8 @@ class UpdateUserRole(graphene.Mutation):
    role=graphene.Field(UserRoleType)
 
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls,root,info,input):
       role=UserRole.objects.get(id=input.id)
       role.name=input.name
@@ -255,6 +266,8 @@ class AssignUserRole(graphene.Mutation):
 
    user=graphene.Field(ExtendUserTyoe)
    @classmethod
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def mutate(cls,root,info,email,role):
       urole=UserRole.objects.get(id=role)
       user=ExtendUser.objects.get(email=email)
@@ -262,25 +275,44 @@ class AssignUserRole(graphene.Mutation):
       user.save()
       return AssignUserRole(user=user)
 
+class LoginUpdate(graphene.Mutation):
+   success=graphene.Boolean()
+   @classmethod
+   def mutate(cls,root,info):
+      try:
+         user=ExtendUser.objects.get(username=info.context.user.username)
+         user.last_login=datetime.datetime.now()
+         print(user.last_login)
+         user.save()
+         return cls(success=True)
+      except:
+         return cls(success= False)
+
+
 class Query(UserQuery, MeQuery, graphene.ObjectType):
    temp=graphene.List(TempType)
    userProfile=graphene.List(UserProfileType)
-   user_role=graphene.List(UserRoleType)
+   user_role=graphene.Field(UserRoleType,id=graphene.Int())
+   all_user_role=graphene.List(UserRoleType)
 
    def resolve_temp(root, info, **kwargs):
       return Temp.objects.all()
    def resolve_userProfile(root,info,**kwargs):
       return UserProfile.objects.all()
+   
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
    def resolve_user_role(root,info,**kwargs):
-      # id=kwargs.get('id')
-      # if id:
+      return UserRole.objects.get(id=kwargs.get("id"))
+
+   @login_required
+   @user_passes_test(lambda user: user.role == UserRole.objects.get(name="Registrar"))
+   def resolve_all_user_role(root,info,**kwargs):
       return UserRole.objects.all()
-      # else:
-         # return UserRole.objects.all()
 
 class Mutation(AuthMutation, graphene.ObjectType):
    update_id = UpdateId.Field()
-   delete_user = DeleteUser.Field()
+   # delete_user = DeleteUser.Field()
    create_userProfile=CreateUserProfile.Field()
    update_userProfile=UpdateUserProfile.Field()
    delete_user_profile=DeleteUserProfile.Field()
@@ -288,5 +320,6 @@ class Mutation(AuthMutation, graphene.ObjectType):
    update_user_role=UpdateUserRole.Field()
    delete_user_role=DeleteUserRole.Field()
    assign_user_role=AssignUserRole.Field()
+   login_update=LoginUpdate.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

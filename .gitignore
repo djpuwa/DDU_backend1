@@ -1,5 +1,5 @@
-*.sqlite3
+migrations/
+images/
+settings.py
+db.sqlite3
 *.pyc
-/migrations
-/images
-*/settings.py
